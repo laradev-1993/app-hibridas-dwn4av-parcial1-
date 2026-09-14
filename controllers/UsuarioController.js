@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import Usuario from "../models/Usuario";
+import Usuario from "../models/Usuario.js";
 
 class UsuarioController{
 

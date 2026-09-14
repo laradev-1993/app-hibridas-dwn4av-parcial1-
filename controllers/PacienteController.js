@@ -1,4 +1,4 @@
-import Paciente from "../models/Paciente";
+import Paciente from "../models/Paciente.js";
 import Turno from '../models/Turno.js';
 
 class PacienteController{

@@ -1,5 +1,5 @@
-import Turno from "../models/Turno";
-import Paciente from "../models/Paciente";
+import Turno from "../models/Turno.js";
+import Paciente from "../models/Paciente.js";
 
 class TurnoController{
 
