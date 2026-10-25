@@ -1,5 +1,6 @@
 import Turno from "../models/Turno.js";
 import Paciente from "../models/Paciente.js";
+import mongoose from 'mongoose';
 
 class TurnoController{
 
@@ -49,29 +50,115 @@ class TurnoController{
         }
     }
 
-    async create(req, res){
-        try {
-            const {paciente, profesional, fechaHora, motivoConsulta, estadoTurno, primeraVez} = req.body;
+        async create(req, res) {
+            try {
+                const { paciente, profesional, fechaHora, motivoConsulta, estadoTurno, primeraVez } = req.body;
 
                 if (!paciente || !profesional || !fechaHora || !motivoConsulta) {
-
-                    return res.status(400).json({message: 'Faltan campos obligatorios'});
+                    return res.status(400).json({
+                        message: 'Faltan campos obligatorios'
+                    });
                 }
 
-            const pacienteExiste = await Paciente.findById(paciente);
-                if (!pacienteExiste) {
+                if (typeof profesional !== 'string' || typeof motivoConsulta !== 'string') {
+                    return res.status(400).json({
+                        message: 'profesional y motivoConsulta deben ser texto'
+                    });
+                }
 
-                    return res.status(404).json({message: 'El paciente indicado no existe'});
-                 }
+                if (isNaN(Date.parse(fechaHora))) {
+                    return res.status(400).json({
+                        message: 'fechaHora no es una fecha válida'
+                    });
+                }
 
+                const estadosValidos = ['Pendiente', 'Confirmado', 'Cancelado', 'Completado'];
+                if (estadoTurno !== undefined && !estadosValidos.includes(estadoTurno)) {
+                    return res.status(400).json({
+                        message: 'estadoTurno no es un valor válido'
+                    });
+                }
 
-            const nuevoTurno = await Turno.create({paciente, profesional, fechaHora, motivoConsulta, estadoTurno, primeraVez});
-            res.status(201).json({message: 'Turno creado correctamente', data: nuevoTurno});
+                if (primeraVez !== undefined && typeof primeraVez !== 'boolean') {
+                    return res.status(400).json({
+                        message: 'primeraVez debe ser booleano'
+                    });
+                }
 
-        } catch (error) {
-            res.status(500).json({message: 'error al crear el turno', error: error.message});
+                let pacienteId;
+
+                if (typeof paciente === 'string') {
+                    // Caso 1: si el paciente existe, se manda su id
+                    if (!mongoose.isValidObjectId(paciente)) {
+                        return res.status(400).json({
+                            message: 'El ID de paciente no tiene un formato válido'
+                        });
+                    }
+
+                    const pacienteExistente = await Paciente.findById(paciente);
+                    if (!pacienteExistente) {
+                        return res.status(404).json({
+                            message: 'Paciente no encontrado'
+                        });
+                    }
+
+                    pacienteId = pacienteExistente._id;
+
+                } else if (typeof paciente === 'object' && paciente !== null) {
+                    // Caso 2: si el paciente es nuevo, se mandan sus datos
+                    const { nombreCompleto, edad, telefono, obraSocial } = paciente;
+
+                    if (!nombreCompleto || edad === undefined || !telefono || !obraSocial) {
+                        return res.status(400).json({
+                            message: 'Faltan campos obligatorios del paciente nuevo'
+                        });
+                    }
+
+                    if (typeof nombreCompleto !== 'string' || typeof telefono !== 'string' || typeof obraSocial !== 'string') {
+                        return res.status(400).json({
+                            message: 'nombreCompleto, telefono y obraSocial del paciente deben ser texto'
+                        });
+                    }
+
+                    if (typeof edad !== 'number') {
+                        return res.status(400).json({
+                            message: 'edad del paciente debe ser un número'
+                        });
+                    }
+
+                    const nuevoPaciente = await Paciente.create({
+                        nombreCompleto, edad, telefono, obraSocial
+                    });
+
+                    pacienteId = nuevoPaciente._id;
+
+                } else {
+                    return res.status(400).json({
+                        message: 'El campo paciente debe ser un ID (string) o los datos de un paciente nuevo (objeto)'
+                    });
+                }
+
+                const nuevoTurno = await Turno.create({
+                    paciente: pacienteId,
+                    profesional,
+                    fechaHora,
+                    motivoConsulta,
+                    estadoTurno,
+                    primeraVez
+                });
+
+                res.status(201).json({
+                    message: 'success',
+                    data: nuevoTurno
+                });
+
+            } catch (error) {
+                res.status(500).json({
+                    message: 'Error al crear el turno',
+                    error: error.message
+                });
+            }
         }
-    }
 
 
     async update(req, res) {

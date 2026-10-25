@@ -1,4 +1,12 @@
 import mongoose from "mongoose";
+import dns from "node:dns";
+
+// Usar DNS públicos para resolver MongoDB Atlas
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+
+
+
+
 
 export const connectDB = async() => {
     try {

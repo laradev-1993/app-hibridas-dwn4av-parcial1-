@@ -51,22 +51,44 @@ class PacienteController{
 
     
     
-    async create(req, res){
-            try {
-                const {nombreCompleto, edad, telefono, obraSocial} = req.body;
+    async create(req, res) {
+    try {
+        const {nombreCompleto, edad, telefono, obraSocial} = req.body;
 
-                   if(!nombreCompleto || edad === undefined || !telefono || !obraSocial){
-                       
-                       return res.status(400).json({message: 'Falta completar campos obligatorios'});
-                   }
-
-                const nuevoPaciente = await Paciente.create({nombreCompleto, edad, telefono, obraSocial});
-                res.status(201).json({message: 'Paciente creado correctamente', data: nuevoPaciente});
-
-            } catch (error) {
-                res.status(500).json({message: 'Error al crear paciente', error: error.message});
-            }
+        if (!nombreCompleto || edad === undefined || !telefono || !obraSocial) {
+            return res.status(400).json({
+                message: 'Faltan campos obligatorios'
+            });
         }
+
+        if (typeof nombreCompleto !== 'string' || typeof telefono !== 'string' || typeof obraSocial !== 'string') {
+            return res.status(400).json({
+                message: 'nombreCompleto, telefono y obraSocial deben ser texto'
+            });
+        }
+
+        if (typeof edad !== 'number') {
+            return res.status(400).json({
+                message: 'edad debe ser un número'
+            });
+        }
+
+        const nuevoPaciente = await Paciente.create({
+            nombreCompleto, edad, telefono, obraSocial
+        });
+
+        res.status(201).json({
+            message: 'success',
+            data: nuevoPaciente
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: 'Error al crear el paciente',
+            error: error.message
+        });
+    }
+}
 
     async update(req, res){
         try {
